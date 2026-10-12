@@ -1,1 +1,5 @@
-
+[[d1_databases]]
+binding = "DB"
+database_name = "NOME_DO_BANCO"
+database_id = "xxxx"
+migrations_dir = "migrations"
