@@ -28,7 +28,7 @@ jobs:
             echo '```'
           } > prompt.txt
       - id: ia
-        uses: actions/ai-inference@v1
+        uses: actions/ai-inference@main
         env:
           COPILOT_GITHUB_TOKEN: ${{ secrets.COPILOT_PAT }}
         with:
