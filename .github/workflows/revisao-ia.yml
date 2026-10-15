@@ -1,0 +1,48 @@
+name: revisao-ia
+on:
+  pull_request:
+    types: [opened, synchronize]
+permissions:
+  contents: read
+  pull-requests: write
+  models: read
+jobs:
+  revisar:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 22
+      - run: npm install -g @github/copilot
+      - name: Diagnostico do Copilot CLI
+        continue-on-error: true
+        env:
+          COPILOT_GITHUB_TOKEN: ${{ secrets.COPILOT_PAT }}
+        run: |
+          if [ -z "$COPILOT_GITHUB_TOKEN" ]; then echo "SEGREDO COPILOT_PAT VAZIO"; fi
+          copilot -p "responda apenas: ok" -s --no-ask-user 2>&1 || echo "saiu com codigo $?"
+      - name: Monta o prompt
+        run: |
+          {
+            echo "Revise o diff de um site com Cloudflare Pages Functions e D1."
+            echo "Aponte, em português e em até 10 itens: segredos expostos,"
+            echo "SQL montado por concatenação em vez de prepare().bind(), e erros de lógica."
+            echo '```diff'
+            git diff origin/${{ github.base_ref }}...HEAD | head -c 20000
+            echo '```'
+          } > prompt.txt
+      - id: ia
+        uses: actions/ai-inference@main
+        env:
+          COPILOT_GITHUB_TOKEN: ${{ secrets.COPILOT_PAT }}
+        with:
+          prompt-file: prompt.txt
+          system-prompt: Você é um revisor de código objetivo.
+          model: ''
+      - name: Comenta no PR
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh pr comment ${{ github.event.pull_request.number }} --body-file "${{ steps.ia.outputs.response-file }}"
