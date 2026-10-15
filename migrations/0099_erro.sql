@@ -1,0 +1,1 @@
+CREATE TABL teste (id INTEGER);
