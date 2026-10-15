@@ -17,6 +17,13 @@ jobs:
         with:
           node-version: 22
       - run: npm install -g @github/copilot
+      - name: Diagnostico do Copilot CLI
+        continue-on-error: true
+        env:
+          COPILOT_GITHUB_TOKEN: ${{ secrets.COPILOT_PAT }}
+        run: |
+          if [ -z "$COPILOT_GITHUB_TOKEN" ]; then echo "SEGREDO COPILOT_PAT VAZIO"; fi
+          copilot -p "responda apenas: ok" -s --no-ask-user 2>&1 || echo "saiu com codigo $?"
       - name: Monta o prompt
         run: |
           {
@@ -34,6 +41,7 @@ jobs:
         with:
           prompt-file: prompt.txt
           system-prompt: Você é um revisor de código objetivo.
+          model: ''
       - name: Comenta no PR
         env:
           GH_TOKEN: ${{ github.token }}
